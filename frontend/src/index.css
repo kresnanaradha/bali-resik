@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+
+  /* Brand green — matches Figma primary buttons / active nav / accents */
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-300: #86efac;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+  --color-brand-900: #14532d;
+  --color-brand-950: #052e16;
+
+  /* Login left-panel gradient (near-black green) */
+  --color-panel-900: #08150f;
+  --color-panel-800: #0d2318;
+  --color-panel-700: #123422;
+}
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-slate-900 antialiased;
+    font-family: var(--font-sans);
+  }
+}
