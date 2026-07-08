@@ -18,6 +18,7 @@ import {
   type UserInput,
 } from "@/features/users/api/useUsers";
 import { UserFormModal } from "@/features/users/components/UserFormModal";
+import { ResetPasswordModal } from "@/features/users/components/ResetPasswordModal";
 import type { User, UserRole, UserStatus } from "@/types/user";
 
 const roleTone: Record<UserRole, BadgeTone> = { warga: "blue", mitra: "amber", admin: "red" };
@@ -41,6 +42,7 @@ export function UsersPage() {
   const [status, setStatus] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [resettingPasswordFor, setResettingPasswordFor] = useState<User | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -136,6 +138,7 @@ export function UsersPage() {
         <ActionMenu
           items={[
             { label: "Edit", onClick: () => openEdit(u) },
+            { label: "Reset Password", onClick: () => setResettingPasswordFor(u) },
             { label: u.status === "active" ? "Tangguhkan" : "Aktifkan", onClick: () => handleToggleStatus(u) },
             { label: "Hapus", onClick: () => handleDelete(u), tone: "danger" },
           ]}
@@ -237,6 +240,8 @@ export function UsersPage() {
           createUser.isError || updateUser.isError ? "Gagal menyimpan pengguna. Periksa kembali data yang dimasukkan." : null
         }
       />
+
+      <ResetPasswordModal user={resettingPasswordFor} onClose={() => setResettingPasswordFor(null)} />
     </div>
   );
 }

@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/Button";
 import { GeoMap } from "@/features/dashboard/components/GeoMap";
 import { ResolutionDonut } from "@/features/dashboard/components/ResolutionDonut";
 import { DistrictTrendChart } from "@/features/dashboard/components/DistrictTrendChart";
-import { dashboardStats } from "@/features/dashboard/api/mockData";
+import { dashboardStats, resolutionRate, districtTrend } from "@/features/dashboard/api/mockData";
+import { downloadCsv } from "@/lib/exportCsv";
 
 function trendBadge(trend: number) {
   return { text: `${trend > 0 ? "+" : ""}${trend}%`, tone: trend >= 0 ? ("up" as const) : ("down" as const) };
@@ -12,6 +13,17 @@ function trendBadge(trend: number) {
 
 export function DashboardPage() {
   const stats = dashboardStats;
+
+  function handleExport() {
+    downloadCsv(`dasbor-laporan-${new Date().toISOString().slice(0, 10)}.csv`, [
+      { Metrik: "Total Pengguna", Nilai: stats.totalPengguna.value, "Tren (30 Hari)": `${stats.totalPengguna.trend}%` },
+      { Metrik: "Mitra Aktif", Nilai: stats.mitraAktif.value, "Tren (30 Hari)": `${stats.mitraAktif.trend}%` },
+      { Metrik: "Permintaan Penjemputan", Nilai: stats.permintaanPenjemputan.value, "Tren (30 Hari)": `${stats.permintaanPenjemputan.trend}%` },
+      { Metrik: "Laporan Sampah (Tertunda)", Nilai: stats.laporanTertunda.value, "Tren (30 Hari)": "-" },
+      { Metrik: "Tingkat Resolusi", Nilai: `${resolutionRate.resolvedPct}%`, "Tren (30 Hari)": "-" },
+      ...districtTrend.map((d) => ({ Metrik: `Volume Distrik ${d.label}`, Nilai: `${d.volumeTon} ton`, "Tren (30 Hari)": "-" })),
+    ]);
+  }
 
   return (
     <div className="space-y-6">
@@ -30,7 +42,7 @@ export function DashboardPage() {
             <CalendarDays className="h-4 w-4 text-gray-400" />
             30 Hari Terakhir
           </button>
-          <Button>
+          <Button onClick={handleExport}>
             <Download className="h-4 w-4" />
             Ekspor Laporan
           </Button>

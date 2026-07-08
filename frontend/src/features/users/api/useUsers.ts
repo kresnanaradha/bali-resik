@@ -98,3 +98,11 @@ export function useDeleteUser() {
     onSuccess: invalidate,
   });
 }
+
+export function useResetUserPassword() {
+  return useMutation({
+    mutationFn: async ({ id, password }: { id: string; password: string }) => {
+      await apiClient.patch(`/users/${id}/password`, { password });
+    },
+  });
+}

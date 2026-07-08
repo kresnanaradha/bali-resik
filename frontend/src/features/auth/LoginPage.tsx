@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, FlaskConical } from "
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useLogin } from "@/features/auth/api/useLogin";
+import { syncBackendUser } from "@/features/auth/api/syncBackendUser";
 import { useAuthStore } from "@/stores/authStore";
 import logo from "@/assets/logo.png";
 import hero from "@/assets/hero.png";
@@ -40,6 +41,10 @@ export function LoginPage() {
       status: "active",
     });
     navigate("/admin/dasbor", { replace: true });
+    // Overwrite with the real backend user (correct UUID id, etc.) once it
+    // resolves — the placeholder above just gets the UI past the login gate
+    // immediately without waiting on the network round-trip.
+    void syncBackendUser();
   }
 
   return (

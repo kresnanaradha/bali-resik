@@ -1,11 +1,14 @@
-import { Search, Bell, HelpCircle } from "lucide-react";
+import { Search, HelpCircle } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 interface TopbarProps {
   searchPlaceholder?: string;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
 }
 
-export function Topbar({ searchPlaceholder }: TopbarProps) {
+export function Topbar({ searchPlaceholder, searchValue, onSearchChange }: TopbarProps) {
   const user = useAuthStore((s) => s.user);
 
   return (
@@ -16,6 +19,8 @@ export function Topbar({ searchPlaceholder }: TopbarProps) {
           <input
             type="text"
             placeholder={searchPlaceholder}
+            value={searchValue ?? ""}
+            onChange={(e) => onSearchChange?.(e.target.value)}
             className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
         </div>
@@ -36,14 +41,7 @@ export function Topbar({ searchPlaceholder }: TopbarProps) {
         >
           <HelpCircle className="h-5 w-5" />
         </button>
-        <button
-          type="button"
-          aria-label="Notifikasi"
-          className="relative text-gray-400 hover:text-gray-600"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500" />
-        </button>
+        <NotificationBell />
         <div className="flex items-center gap-2 border-l border-gray-200 pl-4">
           {user?.avatarUrl ? (
             <img

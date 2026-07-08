@@ -18,6 +18,7 @@ func NewScheduleRepository(db *gorm.DB) *ScheduleRepository {
 }
 
 type ScheduleFilter struct {
+	Search        string
 	DistrictID    string
 	Kelurahan     string
 	TpsLocationID string
@@ -27,11 +28,22 @@ type ScheduleFilter struct {
 
 func (f ScheduleFilter) scope(q *gorm.DB) *gorm.DB {
 	q = q.Preload("TpsLocation").Preload("District")
+	if f.Search != "" {
+		// A subquery avoids joining tps_locations directly — a plain JOIN
+		// makes GORM's default `SELECT *` (it doesn't auto-qualify columns)
+		// pull back both tables' same-named columns (id, created_at, ...),
+		// which either errors or silently corrupts the scan.
+		like := "%" + f.Search + "%"
+		q = q.Where(
+			"schedule_code LIKE ? OR kelurahan LIKE ? OR tps_location_id IN (SELECT id FROM tps_locations WHERE name LIKE ?)",
+			like, like, like,
+		)
+	}
 	if f.DistrictID != "" {
 		q = q.Where("district_id = ?", f.DistrictID)
 	}
 	if f.Kelurahan != "" {
-		q = q.Where("kelurahan = ?", f.Kelurahan)
+		q = q.Where("kelurahan LIKE ?", "%"+f.Kelurahan+"%")
 	}
 	if f.TpsLocationID != "" {
 		q = q.Where("tps_location_id = ?", f.TpsLocationID)

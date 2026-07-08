@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Users2, BadgeCheck, Ban, ClipboardList, Download, UserPlus, Star, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Users2, BadgeCheck, Ban, ClipboardList, Download, UserPlus, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { StatusBadge, type BadgeTone } from "@/components/ui/StatusBadge";
+import { ActionMenu } from "@/components/ui/ActionMenu";
+import { useTopbarSearch } from "@/hooks/useTopbarSearch";
 import {
   useMitraQuery,
   useMitraStatsQuery,
@@ -33,18 +34,10 @@ const statusLabel: Record<MitraStatus, string> = { active: "Aktif", inactive: "N
 export function MitraPage() {
   const [page, setPage] = useState(1);
   const [tab, setTab] = useState<MitraTab>("semua");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMitra, setEditingMitra] = useState<Mitra | null>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setSearch(searchInput);
-      setPage(1);
-    }, 400);
-    return () => clearTimeout(t);
-  }, [searchInput]);
+  const search = useTopbarSearch();
 
   const activeTab = tabs.find((t) => t.key === tab)!;
   const params = { search, status: activeTab.status, page, limit: 10 };
@@ -83,6 +76,22 @@ export function MitraPage() {
     }
   }
 
+  // Verifikasi status berubah lewat aksi admin yang eksplisit di sini
+  // (bukan klik badge status secara langsung) — mitra baru mendaftar sebagai
+  // "pending_verification", admin meninjau lalu Setujui/Tolak.
+  function statusActions(m: Mitra) {
+    if (m.status === "pending_verification") {
+      return [
+        { label: "Setujui (Aktifkan)", onClick: () => updateStatus.mutate({ id: m.id, status: "active" }) },
+        { label: "Tolak (Nonaktifkan)", onClick: () => updateStatus.mutate({ id: m.id, status: "inactive" }), tone: "danger" as const },
+      ];
+    }
+    if (m.status === "active") {
+      return [{ label: "Nonaktifkan", onClick: () => updateStatus.mutate({ id: m.id, status: "inactive" }) }];
+    }
+    return [{ label: "Aktifkan", onClick: () => updateStatus.mutate({ id: m.id, status: "active" }) }];
+  }
+
   const columns: DataTableColumn<Mitra>[] = [
     {
       key: "name",
@@ -119,24 +128,19 @@ export function MitraPage() {
     {
       key: "status",
       header: "Status",
-      render: (m) => (
-        <button type="button" onClick={() => updateStatus.mutate({ id: m.id, status: m.status === "active" ? "inactive" : "active" })}>
-          <StatusBadge label={statusLabel[m.status]} tone={statusTone[m.status]} />
-        </button>
-      ),
+      render: (m) => <StatusBadge label={statusLabel[m.status]} tone={statusTone[m.status]} />,
     },
     {
       key: "action",
       header: "Aksi",
       render: (m) => (
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={() => openEdit(m)} className="text-gray-400 hover:text-brand-700" aria-label="Edit mitra">
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button type="button" onClick={() => handleDelete(m)} className="text-gray-400 hover:text-red-600" aria-label="Hapus mitra">
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
+        <ActionMenu
+          items={[
+            { label: "Edit", onClick: () => openEdit(m) },
+            ...statusActions(m),
+            { label: "Hapus", onClick: () => handleDelete(m), tone: "danger" },
+          ]}
+        />
       ),
     },
   ];
@@ -189,10 +193,6 @@ export function MitraPage() {
           <p className="mt-3 text-sm text-gray-500">Verifikasi Baru</p>
           <p className="mt-1 text-2xl font-bold text-gray-900">{stats?.verifikasi_baru ?? "-"}</p>
         </div>
-      </div>
-
-      <div className="max-w-md">
-        <Input placeholder="Cari mitra berdasarkan nama atau wilayah..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
       </div>
 
       <div>

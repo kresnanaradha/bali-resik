@@ -1,11 +1,11 @@
 import { LineChart, Line, XAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { weeklyTrend } from "@/features/analytics/api/mockData";
+import type { WeeklyTrendPoint } from "@/types/analytics";
 
-export function WeeklyTrendChart() {
+export function WeeklyTrendChart({ data }: { data: WeeklyTrendPoint[] }) {
   return (
     <div className="h-48">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={weeklyTrend} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+        <LineChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
           <XAxis
             dataKey="day"
             axisLine={false}

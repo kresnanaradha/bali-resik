@@ -7,6 +7,9 @@ import { useDistricts } from "@/hooks/useDistricts";
 import type { MitraInput } from "@/features/mitra/api/useMitra";
 import type { Mitra } from "@/types/mitra";
 
+// Mitra yang didaftarkan lewat portal ini selalu Pick-Up On-Demand — layanan
+// rutin dioperasikan pemerintah, bukan mitra, jadi tidak ada pilihan di form.
+
 interface MitraFormModalProps {
   open: boolean;
   onClose: () => void;
@@ -70,31 +73,19 @@ export function MitraFormModal({ open, onClose, onSubmit, isSubmitting, initialM
           <label className="mb-1.5 block text-xs font-medium text-gray-600">Nama Mitra</label>
           <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nama perusahaan/mitra" />
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">Jenis Layanan</label>
-            <Select
-              value={form.service_type}
-              onChange={(e) => setForm((f) => ({ ...f, service_type: e.target.value as MitraInput["service_type"] }))}
-            >
-              <option value="on_demand">Pick-Up On-Demand</option>
-              <option value="rutin">Pick-up Rutin</option>
-            </Select>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">Wilayah Operasi</label>
-            <Select
-              value={form.service_area_district_id ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, service_area_district_id: e.target.value }))}
-            >
-              <option value="">Tidak ada</option>
-              {districts?.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </Select>
-          </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-gray-600">Wilayah Operasi</label>
+          <Select
+            value={form.service_area_district_id ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, service_area_district_id: e.target.value }))}
+          >
+            <option value="">Tidak ada</option>
+            {districts?.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </Select>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

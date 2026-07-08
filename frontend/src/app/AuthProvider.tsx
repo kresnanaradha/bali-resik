@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuthStore } from "@/stores/authStore";
+import { syncBackendUser } from "@/features/auth/api/syncBackendUser";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const setUser = useAuthStore((s) => s.setUser);
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: "admin",
           status: "active",
         });
+        void syncBackendUser();
       } else {
         setUser(null);
       }

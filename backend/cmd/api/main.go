@@ -42,6 +42,9 @@ func main() {
 	); err != nil {
 		log.Fatalf("gagal migrasi database: %v", err)
 	}
+	if err := db.FixColumnTypes(gormDB); err != nil {
+		log.Fatalf("gagal memperbaiki tipe kolom: %v", err)
+	}
 
 	e := echo.New()
 	e.Validator = validate.New()
@@ -78,6 +81,7 @@ func main() {
 	handler.NewPickupHandler(service.NewPickupService(repository.NewPickupRepository(gormDB))).Register(api)
 	handler.NewPointsTransactionHandler(service.NewPointsTransactionService(repository.NewPointsTransactionRepository(gormDB))).Register(api)
 	handler.NewNotificationHandler(service.NewNotificationService(repository.NewNotificationRepository(gormDB))).Register(api)
+	handler.NewAnalyticsHandler(service.NewAnalyticsService(gormDB)).Register(api)
 
 	log.Printf("Auth mode: %s", cfg.AuthMode)
 	e.Logger.Fatal(e.Start(":" + cfg.Port))

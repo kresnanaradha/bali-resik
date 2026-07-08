@@ -27,6 +27,7 @@ func (h *UserHandler) Register(g *echo.Group) {
 	g.POST("/users", h.Create)
 	g.PATCH("/users/:id", h.Update)
 	g.PATCH("/users/:id/status", h.UpdateStatus)
+	g.PATCH("/users/:id/password", h.ResetPassword)
 	g.DELETE("/users/:id", h.Delete)
 }
 
@@ -106,6 +107,23 @@ func (h *UserHandler) UpdateStatus(c echo.Context) error {
 		return response.Fail(c, http.StatusInternalServerError, err.Error())
 	}
 	return response.OK(c, user, "Status pengguna berhasil diperbarui")
+}
+
+func (h *UserHandler) ResetPassword(c echo.Context) error {
+	var body struct {
+		Password string `json:"password" validate:"required,min=8"`
+	}
+	if err := httpx.BindAndValidate(c, &body); err != nil {
+		return response.Fail(c, http.StatusBadRequest, "Password minimal 8 karakter")
+	}
+	err := h.service.SetPassword(c.Param("id"), body.Password)
+	if errors.Is(err, service.ErrNotFound) {
+		return response.Fail(c, http.StatusNotFound, "Pengguna tidak ditemukan")
+	}
+	if err != nil {
+		return response.Fail(c, http.StatusInternalServerError, err.Error())
+	}
+	return response.OK(c, nil, "Password berhasil direset")
 }
 
 func (h *UserHandler) Delete(c echo.Context) error {

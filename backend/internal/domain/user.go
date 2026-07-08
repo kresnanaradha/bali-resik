@@ -34,6 +34,11 @@ type User struct {
 	AvatarURL   string     `gorm:"type:text" json:"avatar_url"`
 	Status      UserStatus `gorm:"size:20;not null;default:active" json:"status"`
 	JoinedAt    time.Time  `json:"joined_at"`
+	// PasswordHash is bcrypt-hashed and never serialized (json:"-") — the
+	// portal's own admin login still runs through Firebase/dev-bypass;
+	// this field just lets an admin set/reset a password value on any user
+	// row for now, ahead of a real Firebase project being wired up.
+	PasswordHash string `gorm:"size:255" json:"-"`
 }
 
 // BeforeCreate shadows Base.BeforeCreate (Go method resolution picks the

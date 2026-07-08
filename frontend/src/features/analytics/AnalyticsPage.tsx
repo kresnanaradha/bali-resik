@@ -1,15 +1,44 @@
-import { Truck, Package, Target, Users, CalendarDays, Download } from "lucide-react";
+import { useState } from "react";
+import { Truck, Package, Target, Users, Download } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { WeeklyTrendChart } from "@/features/analytics/components/WeeklyTrendChart";
 import { WasteDistributionDonut } from "@/features/analytics/components/WasteDistributionDonut";
 import { MitraPerformanceList } from "@/features/analytics/components/MitraPerformanceList";
-import { analyticsStats, districtReport } from "@/features/analytics/api/mockData";
+import {
+  useAnalyticsOverview,
+  useWeeklyTrend,
+  useWasteDistribution,
+  useMitraPerformance,
+  useDistrictReport,
+} from "@/features/analytics/api/useAnalytics";
+import { downloadCsv } from "@/lib/exportCsv";
 
 export function AnalyticsPage() {
-  const stats = analyticsStats;
-  const progressPct = Math.min(100, (stats.sampahTerkumpulTon.value / stats.tingkatPenyelesaian.targetTon) * 100);
+  const [range, setRange] = useState("7d");
+
+  const overviewQuery = useAnalyticsOverview(range);
+  const weeklyTrendQuery = useWeeklyTrend(range);
+  const wasteDistributionQuery = useWasteDistribution(range);
+  const mitraPerformanceQuery = useMitraPerformance(range);
+  const districtReportQuery = useDistrictReport(range);
+
+  const stats = overviewQuery.data;
+  const progressPct = stats ? Math.min(100, (stats.sampah_terkumpul_ton / stats.target_ton) * 100) : 0;
+  const districtReport = districtReportQuery.data ?? [];
+
+  function handleExport() {
+    if (!stats) return;
+    downloadCsv(`analitik-${range}-${new Date().toISOString().slice(0, 10)}.csv`, [
+      { Metrik: "Total Penjemputan", Nilai: stats.total_penjemputan, Tren: `${stats.total_penjemputan_trend_pct}%` },
+      { Metrik: "Sampah Terkumpul (Ton)", Nilai: stats.sampah_terkumpul_ton, Tren: `${stats.sampah_terkumpul_trend_pct}%` },
+      { Metrik: "Tingkat Penyelesaian", Nilai: `${stats.tingkat_penyelesaian}%`, Tren: "-" },
+      { Metrik: "Pertumbuhan Pengguna", Nilai: stats.pertumbuhan_pengguna, Tren: `+${stats.pertumbuhan_delta}` },
+      ...districtReport.map((d) => ({ Metrik: `Distrik: ${d.district}`, Nilai: `${d.volume_ton} ton`, Tren: d.status })),
+    ]);
+  }
 
   return (
     <div className="space-y-6">
@@ -21,14 +50,12 @@ export function AnalyticsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <CalendarDays className="h-4 w-4 text-gray-400" />
-            7 Hari Terakhir
-          </button>
-          <Button>
+          <Select value={range} onChange={(e) => setRange(e.target.value)} className="w-40">
+            <option value="7d">7 Hari Terakhir</option>
+            <option value="30d">30 Hari Terakhir</option>
+            <option value="90d">90 Hari Terakhir</option>
+          </Select>
+          <Button onClick={handleExport}>
             <Download className="h-4 w-4" />
             Ekspor Analitik
           </Button>
@@ -40,15 +67,15 @@ export function AnalyticsPage() {
           icon={Truck}
           iconClassName="bg-brand-50 text-brand-700"
           label="Total Penjemputan"
-          value={stats.totalPenjemputan.value.toLocaleString("id-ID")}
-          badge={{ text: `+${stats.totalPenjemputan.trend}%`, tone: "up" }}
+          value={stats?.total_penjemputan ?? "-"}
+          badge={stats ? { text: `${stats.total_penjemputan_trend_pct >= 0 ? "+" : ""}${stats.total_penjemputan_trend_pct}%`, tone: stats.total_penjemputan_trend_pct >= 0 ? "up" : "down" } : undefined}
         />
         <StatCard
           icon={Package}
           iconClassName="bg-blue-50 text-blue-600"
           label="Sampah Terkumpul (Ton)"
-          value={stats.sampahTerkumpulTon.value.toLocaleString("id-ID")}
-          badge={{ text: `+${stats.sampahTerkumpulTon.trend}%`, tone: "up" }}
+          value={stats?.sampah_terkumpul_ton ?? "-"}
+          badge={stats ? { text: `${stats.sampah_terkumpul_trend_pct >= 0 ? "+" : ""}${stats.sampah_terkumpul_trend_pct}%`, tone: stats.sampah_terkumpul_trend_pct >= 0 ? "up" : "down" } : undefined}
         />
 
         <div className="rounded-xl border border-gray-200 bg-white p-4">
@@ -57,15 +84,15 @@ export function AnalyticsPage() {
               <Target className="h-4.5 w-4.5" />
             </span>
             <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-              {stats.tingkatPenyelesaian.progressPct}%
+              {Math.round(progressPct)}%
             </span>
           </div>
           <p className="mt-3 text-sm text-gray-500">Tingkat Penyelesaian</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{stats.tingkatPenyelesaian.value}%</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{stats?.tingkat_penyelesaian ?? "-"}%</p>
           <div className="mt-2 h-1.5 rounded-full bg-gray-100">
             <div className="h-1.5 rounded-full bg-brand-600" style={{ width: `${progressPct}%` }} />
           </div>
-          <p className="mt-1.5 text-xs text-gray-400">Target: {stats.tingkatPenyelesaian.targetTon} Ton</p>
+          <p className="mt-1.5 text-xs text-gray-400">Target: {stats?.target_ton ?? "-"} Ton</p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-4">
@@ -74,14 +101,12 @@ export function AnalyticsPage() {
               <Users className="h-4.5 w-4.5" />
             </span>
             <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-              +{stats.pertumbuhanPengguna.delta}
+              +{stats?.pertumbuhan_delta ?? 0}
             </span>
           </div>
           <p className="mt-3 text-sm text-gray-500">Pertumbuhan Pengguna</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">
-            {stats.pertumbuhanPengguna.value.toLocaleString("id-ID")}
-          </p>
-          <p className="mt-1.5 text-xs text-gray-400">Total rumah tangga terdaftar</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{stats?.pertumbuhan_pengguna ?? "-"}</p>
+          <p className="mt-1.5 text-xs text-gray-400">Total warga terdaftar</p>
         </div>
       </div>
 
@@ -97,24 +122,19 @@ export function AnalyticsPage() {
               <span className="h-2 w-2 rounded-full bg-blue-500" /> Anorganik
             </span>
           </div>
-          <WeeklyTrendChart />
+          <WeeklyTrendChart data={weeklyTrendQuery.data ?? []} />
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <p className="text-sm font-semibold text-gray-900">Distribusi Sampah</p>
-          <WasteDistributionDonut />
+          <WasteDistributionDonut data={wasteDistributionQuery.data ?? []} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-gray-900">Kinerja Mitra</p>
-            <a href="#" className="text-sm font-medium text-brand-700 hover:underline">
-              Lihat Semua
-            </a>
-          </div>
-          <MitraPerformanceList />
+          <p className="mb-3 text-sm font-semibold text-gray-900">Kinerja Mitra</p>
+          <MitraPerformanceList data={mitraPerformanceQuery.data ?? []} />
         </div>
 
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -129,16 +149,24 @@ export function AnalyticsPage() {
               </tr>
             </thead>
             <tbody>
-              {districtReport.map((row) => (
-                <tr key={row.district} className="border-b border-gray-50 last:border-0">
-                  <td className="px-4 py-3 font-medium text-gray-800">{row.district}</td>
-                  <td className="px-4 py-3 text-gray-600">{row.households.toLocaleString("id-ID")}</td>
-                  <td className="px-4 py-3 text-gray-600">{row.volumeTon}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge label={row.status} tone={row.status === "Optimal" ? "green" : "amber"} />
+              {districtReport.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-sm text-gray-400">
+                    Belum ada data distrik.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                districtReport.map((row) => (
+                  <tr key={row.district} className="border-b border-gray-50 last:border-0">
+                    <td className="px-4 py-3 font-medium text-gray-800">{row.district}</td>
+                    <td className="px-4 py-3 text-gray-600">{row.households.toLocaleString("id-ID")}</td>
+                    <td className="px-4 py-3 text-gray-600">{row.volume_ton}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge label={row.status} tone={row.status === "Optimal" ? "green" : "amber"} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

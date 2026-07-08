@@ -38,6 +38,7 @@ func (h *ScheduleHandler) Register(g *echo.Group) {
 func (h *ScheduleHandler) List(c echo.Context) error {
 	page, limit := httpx.Pagination(c)
 	filter := repository.ScheduleFilter{
+		Search:        c.QueryParam("search"),
 		DistrictID:    c.QueryParam("kecamatan"),
 		Kelurahan:     c.QueryParam("kelurahan"),
 		TpsLocationID: c.QueryParam("tps_location_id"),

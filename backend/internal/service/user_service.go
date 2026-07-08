@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
 	"bali-resik-backend/internal/domain"
@@ -142,4 +143,17 @@ func (s *UserService) Delete(id string) error {
 		return err
 	}
 	return s.repo.Delete(id)
+}
+
+func (s *UserService) SetPassword(id, newPassword string) error {
+	user, err := s.Get(id)
+	if err != nil {
+		return err
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.PasswordHash = string(hash)
+	return s.repo.Update(user)
 }
