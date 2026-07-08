@@ -10,8 +10,9 @@ type Config struct {
 	Port              string
 	DBDSN             string
 	AllowedOrigin     string
-	AuthMode          string // "firebase" | "dev"
+	AuthMode          string // "firebase" | "dev" — fallback when no local JWT is presented
 	FirebaseProjectID string // required when AuthMode == "firebase"
+	JWTSecret         string // signs the app's own login tokens (independent of AuthMode)
 }
 
 func Load() *Config {
@@ -23,6 +24,7 @@ func Load() *Config {
 		AllowedOrigin:     getEnv("ALLOWED_ORIGIN", "http://localhost:5173"),
 		AuthMode:          getEnv("AUTH_MODE", "dev"),
 		FirebaseProjectID: getEnv("FIREBASE_PROJECT_ID", ""),
+		JWTSecret:         getEnv("JWT_SECRET", "dev-insecure-secret-change-me"),
 	}
 }
 

@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { isAxiosError } from "axios";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { useLogin } from "@/features/auth/api/useLogin";
+import { useLocalLogin } from "@/features/auth/api/useLocalAuth";
 import { syncBackendUser } from "@/features/auth/api/syncBackendUser";
 import { useAuthStore } from "@/stores/authStore";
 import logo from "@/assets/logo.png";
@@ -17,12 +18,19 @@ const stats = [
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const login = useLogin();
+  const login = useLocalLogin();
   const setUser = useAuthStore((s) => s.setUser);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  const errorMessage =
+    login.isError && isAxiosError(login.error) && login.error.response?.data?.message
+      ? login.error.response.data.message
+      : login.isError
+        ? "Gagal masuk. Silakan coba lagi."
+        : null;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -158,10 +166,8 @@ export function LoginPage() {
               </a>
             </div>
 
-            {login.isError && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-                Email atau kata sandi salah. Silakan coba lagi.
-              </p>
+            {errorMessage && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{errorMessage}</p>
             )}
 
             <Button type="submit" disabled={login.isPending} className="w-full">
@@ -169,6 +175,13 @@ export function LoginPage() {
               <ArrowRight className="h-4 w-4" />
             </Button>
           </form>
+
+          <p className="mt-4 text-center text-sm text-gray-500">
+            Belum punya akun?{" "}
+            <Link to="/register" className="font-medium text-brand-700 hover:underline">
+              Daftar di sini
+            </Link>
+          </p>
 
           <div className="mt-6 flex items-center gap-2 border-t border-gray-100 pt-4 text-xs text-gray-500">
             <ShieldCheck className="h-4 w-4 shrink-0 text-brand-600" />

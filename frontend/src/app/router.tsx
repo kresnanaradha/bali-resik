@@ -2,6 +2,7 @@ import { createBrowserRouter, createRoutesFromElements, Route, Navigate } from "
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { ProtectedRoute } from "@/app/ProtectedRoute";
 import { LoginPage } from "@/features/auth/LoginPage";
+import { RegisterPage } from "@/features/auth/RegisterPage";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { ReportsPage } from "@/features/reports/ReportsPage";
 import { MitraPage } from "@/features/mitra/MitraPage";
@@ -14,6 +15,7 @@ export const router = createBrowserRouter(
   createRoutesFromElements(
     <>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/admin" element={<AdminLayout />}>

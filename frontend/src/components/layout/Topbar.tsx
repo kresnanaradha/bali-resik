@@ -1,6 +1,6 @@
 import { Search, HelpCircle } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
 import { NotificationBell } from "@/components/layout/NotificationBell";
+import { UserMenu } from "@/components/layout/UserMenu";
 
 interface TopbarProps {
   searchPlaceholder?: string;
@@ -9,8 +9,6 @@ interface TopbarProps {
 }
 
 export function Topbar({ searchPlaceholder, searchValue, onSearchChange }: TopbarProps) {
-  const user = useAuthStore((s) => s.user);
-
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
       {searchPlaceholder ? (
@@ -42,27 +40,7 @@ export function Topbar({ searchPlaceholder, searchValue, onSearchChange }: Topba
           <HelpCircle className="h-5 w-5" />
         </button>
         <NotificationBell />
-        <div className="flex items-center gap-2 border-l border-gray-200 pl-4">
-          {user?.avatarUrl ? (
-            <img
-              src={user.avatarUrl}
-              alt={user.fullName}
-              className="h-8 w-8 rounded-full object-cover"
-            />
-          ) : (
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
-              {user?.fullName?.charAt(0) ?? "A"}
-            </span>
-          )}
-          <div className="hidden text-left sm:block">
-            <p className="text-sm font-semibold leading-tight text-gray-900">
-              {user?.fullName ?? "Admin"}
-            </p>
-            <p className="text-[11px] uppercase leading-tight text-gray-400">
-              {user?.role ?? "admin"}
-            </p>
-          </div>
-        </div>
+        <UserMenu />
       </div>
     </header>
   );

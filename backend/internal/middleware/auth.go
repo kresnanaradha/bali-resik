@@ -10,29 +10,43 @@ import (
 	"bali-resik-backend/internal/config"
 	"bali-resik-backend/internal/domain"
 	"bali-resik-backend/internal/middleware/firebaseauth"
+	"bali-resik-backend/internal/middleware/localauth"
 	"bali-resik-backend/pkg/response"
 )
 
 const userContextKey = "authUser"
 
-// Auth resolves the caller's domain.User from either a verified Firebase ID
-// token (AuthMode=firebase) or a dev bypass (AuthMode=dev, default) that
-// auto-provisions a local admin user so the API is testable without a real
-// Firebase project — mirrors the frontend's "Skip Login (Dev)" button.
+// Auth resolves the caller's domain.User. It tries the app's own login
+// token first (issued by /auth/login or /auth/register) regardless of
+// AuthMode, since that's real credential-backed auth; only when no such
+// token is presented does it fall back to AuthMode's behavior — a verified
+// Firebase ID token (AuthMode=firebase) or the dev bypass (AuthMode=dev,
+// default) that auto-provisions a local admin user, mirroring the
+// frontend's "Skip Login (Dev)" button.
 func Auth(cfg *config.Config, db *gorm.DB) echo.MiddlewareFunc {
-	verifier := firebaseauth.NewVerifier(cfg.FirebaseProjectID)
+	fbVerifier := firebaseauth.NewVerifier(cfg.FirebaseProjectID)
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			bearerToken := strings.TrimPrefix(c.Request().Header.Get("Authorization"), "Bearer ")
+
+			if bearerToken != "" {
+				if userID, err := localauth.VerifyToken(cfg.JWTSecret, bearerToken); err == nil {
+					var user domain.User
+					if dbErr := db.First(&user, "id = ?", userID).Error; dbErr == nil {
+						c.Set(userContextKey, &user)
+						return next(c)
+					}
+				}
+			}
+
 			var firebaseUID, email, name string
 
 			if cfg.AuthMode == "firebase" {
-				authHeader := c.Request().Header.Get("Authorization")
-				if !strings.HasPrefix(authHeader, "Bearer ") {
+				if !strings.HasPrefix(c.Request().Header.Get("Authorization"), "Bearer ") {
 					return response.Fail(c, http.StatusUnauthorized, "Token otorisasi tidak ditemukan")
 				}
-				idToken := strings.TrimPrefix(authHeader, "Bearer ")
-				claims, err := verifier.Verify(idToken)
+				claims, err := fbVerifier.Verify(bearerToken)
 				if err != nil {
 					return response.Fail(c, http.StatusUnauthorized, err.Error())
 				}

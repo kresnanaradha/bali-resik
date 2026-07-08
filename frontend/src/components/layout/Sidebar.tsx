@@ -10,8 +10,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
+import { useLogout } from "@/hooks/useLogout";
 import logo from "@/assets/logo.png";
 
 const dashboardNav = [
@@ -63,6 +62,7 @@ function NavSection({
 
 export function Sidebar() {
   const user = useAuthStore((s) => s.user);
+  const logout = useLogout();
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col justify-between border-r border-gray-200 bg-white">
@@ -98,7 +98,7 @@ export function Sidebar() {
         </div>
         <button
           type="button"
-          onClick={() => signOut(auth)}
+          onClick={logout}
           aria-label="Keluar"
           className="text-gray-400 hover:text-gray-600"
         >

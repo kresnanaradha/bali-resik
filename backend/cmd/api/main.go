@@ -60,12 +60,20 @@ func main() {
 		return response.OK(c, map[string]string{"status": "ok"}, "Bali Resik API berjalan")
 	})
 
+	userRepo := repository.NewUserRepository(gormDB)
+	authHandler := handler.NewAuthHandler(service.NewAuthService(userRepo, cfg.JWTSecret))
+
+	// /auth/register and /auth/login sit outside the Auth middleware — a
+	// caller has no token yet when calling them.
+	public := e.Group("/api/v1")
+	authHandler.RegisterPublic(public)
+
 	api := e.Group("/api/v1")
 	api.Use(appmw.Auth(cfg, gormDB))
 	api.Use(appmw.RequireAdmin)
 
-	handler.NewAuthHandler().Register(api)
-	handler.NewUserHandler(service.NewUserService(repository.NewUserRepository(gormDB))).Register(api)
+	authHandler.Register(api)
+	handler.NewUserHandler(service.NewUserService(userRepo)).Register(api)
 	handler.NewMitraHandler(service.NewMitraService(
 		repository.NewMitraRepository(gormDB),
 		repository.NewMitraDocumentRepository(gormDB),
