@@ -277,10 +277,23 @@ func seedReports(gdb *gorm.DB, warga []domain.User, districts []domain.District)
 		desc     string
 		priority domain.ReportPriority
 		status   domain.ReportStatus
+		photos   []string
 	}{
-		{domain.WastePlastik, "Pantai Kuta, Badung", "Sampah plastik menumpuk di pinggir pantai", domain.PriorityMedium, domain.ReportMenunggu},
-		{domain.WasteOrganik, "Pasar Gianyar", "Sampah organik pasar tidak diangkut", domain.PriorityHigh, domain.ReportMenunggu},
-		{domain.WasteBerbahaya, "Tebing Uluwatu", "Limbah B3 dibuang sembarangan", domain.PriorityHigh, domain.ReportTerverifikasi},
+		{
+			domain.WastePlastik, "Pantai Kuta, Badung", "Sampah plastik menumpuk di pinggir pantai",
+			domain.PriorityMedium, domain.ReportMenunggu,
+			[]string{"https://picsum.photos/seed/br-1000-a/800/600", "https://picsum.photos/seed/br-1000-b/800/600"},
+		},
+		{
+			domain.WasteOrganik, "Pasar Gianyar", "Sampah organik pasar tidak diangkut",
+			domain.PriorityHigh, domain.ReportMenunggu,
+			[]string{"https://picsum.photos/seed/br-1001-a/800/600"},
+		},
+		{
+			domain.WasteBerbahaya, "Tebing Uluwatu", "Limbah B3 dibuang sembarangan",
+			domain.PriorityHigh, domain.ReportTerverifikasi,
+			[]string{"https://picsum.photos/seed/br-1002-a/800/600", "https://picsum.photos/seed/br-1002-b/800/600", "https://picsum.photos/seed/br-1002-c/800/600"},
+		},
 	}
 
 	for i, d := range data {
@@ -295,6 +308,7 @@ func seedReports(gdb *gorm.DB, warga []domain.User, districts []domain.District)
 			DistrictID:   &district.ID,
 			Status:       d.status,
 			Priority:     d.priority,
+			PhotoURLs:    d.photos,
 		}
 		if err := gdb.Create(&r).Error; err != nil {
 			log.Fatalf("gagal seed laporan: %v", err)

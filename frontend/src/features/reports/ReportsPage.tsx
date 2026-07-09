@@ -11,6 +11,7 @@ import { ActionMenu } from "@/components/ui/ActionMenu";
 import { useDistricts } from "@/hooks/useDistricts";
 import { useTopbarSearch } from "@/hooks/useTopbarSearch";
 import { useReportsQuery, useReportStatsQuery, useUpdateReportStatus } from "@/features/reports/api/useReports";
+import { ReportDetailModal } from "@/features/reports/components/ReportDetailModal";
 import { downloadCsv } from "@/lib/exportCsv";
 import { downloadPdf } from "@/lib/exportPdf";
 import type { Report, ReportStatus, WasteType } from "@/types/report";
@@ -63,6 +64,7 @@ export function ReportsPage() {
   const [status, setStatus] = useState("");
   const [wasteType, setWasteType] = useState("");
   const [districtId, setDistrictId] = useState("");
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   const search = useTopbarSearch();
   const { data: districts } = useDistricts();
@@ -148,15 +150,11 @@ export function ReportsPage() {
       header: "Aksi",
       render: (r) => {
         const next = nextStatus[r.status];
-        return (
-          <ActionMenu
-            items={
-              next
-                ? [{ label: next.label, onClick: () => updateStatus.mutate({ id: r.id, status: next.status }) }]
-                : [{ label: "Tidak ada aksi lanjutan", onClick: () => {} }]
-            }
-          />
-        );
+        const items = [{ label: "Lihat Detail", onClick: () => setSelectedReport(r) }];
+        if (next) {
+          items.push({ label: next.label, onClick: () => updateStatus.mutate({ id: r.id, status: next.status }) });
+        }
+        return <ActionMenu items={items} />;
       },
     },
   ];
@@ -246,6 +244,15 @@ export function ReportsPage() {
         onPageChange={setPage}
         isLoading={reportsQuery.isLoading}
         emptyMessage="Belum ada laporan yang cocok dengan filter ini."
+      />
+
+      <ReportDetailModal
+        report={selectedReport}
+        onClose={() => setSelectedReport(null)}
+        wasteTypeLabel={wasteTypeLabel}
+        wasteTypeTone={wasteTypeTone}
+        statusLabel={statusLabel}
+        statusTone={statusTone}
       />
     </div>
   );

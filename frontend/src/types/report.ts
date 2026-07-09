@@ -1,5 +1,6 @@
 import type { District } from "@/types/district";
 import type { User } from "@/types/user";
+import type { Mitra } from "@/types/mitra";
 
 export type WasteType =
   | "organik"
@@ -27,5 +28,10 @@ export interface Report {
   status: ReportStatus;
   priority: ReportPriority;
   assigned_mitra_id: string | null;
+  assigned_mitra?: Mitra | null;
+  photo_urls: string[] | null;
+  latitude: number;
+  longitude: number;
+  resolved_at: string | null;
   created_at: string;
 }
