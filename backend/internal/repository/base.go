@@ -1,6 +1,9 @@
 package repository
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
 
 // Base implements the CRUD mechanics shared by every entity repository via
 // Go generics, so each concrete repository only needs to add its own
@@ -29,8 +32,12 @@ func (b Base[T]) FindByID(id string, preloads ...string) (*T, error) {
 	return &entity, nil
 }
 
+// Update saves only the entity's own columns. Services fetch via FindByID
+// with preloads before mutating, so the entity often carries a stale belongs-to
+// association (e.g. an old District struct); a plain Save() would let GORM
+// resync the FK from that stale association and silently revert the change.
 func (b Base[T]) Update(entity *T) error {
-	return b.DB.Save(entity).Error
+	return b.DB.Omit(clause.Associations).Save(entity).Error
 }
 
 func (b Base[T]) Delete(id string) error {
